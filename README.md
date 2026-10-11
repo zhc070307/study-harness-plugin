@@ -1,8 +1,7 @@
 # Study Harness Plugin
 
-独立的 DeepSeek Harness 学习插件。使用 Harness 的窗口、文件工作区、会话和模型服务，提供课程与学期、材料整理、教材检索、笔记与练习、作答反馈、录音转写和外部日历。无需运行 Study Agent 的独立桌面应用。
+独立的 DeepSeek Harness 学习插件。使用 Harness 的窗口、文件工作区、会话和模型服务，提供课程与学期、材料整理、教材检索、笔记与练习、作答反馈、录音转写和外部日历。
 
-本仓库从 Study Agent 选取学习领域源码独立维护，来源见 [SOURCE.json](SOURCE.json)。不包含 Harness runtime；插件调用宿主提供的公开包接口。当前适配并测试的官方版本是 **0.2.1-alpha.2**，版本不匹配时应先更新适配，不能靠忽略版本检查安装。
 
 ## 构建与安装
 
