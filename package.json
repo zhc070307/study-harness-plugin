@@ -1,6 +1,6 @@
 {
   "name": "@study-agent/harness-plugin",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Project-bound learning tools, shared study context, transcription and calendars for DeepSeek Harness",
   "type": "module",
   "license": "MIT",
@@ -63,8 +63,8 @@
     "test": "vitest run && python3 -m unittest discover -s tests -v",
     "test:learning": "PYTHONPATH=packages/learning/src python3 -m unittest discover -s packages/learning/tests -t packages/learning -q",
     "test:install": "node scripts/smoke-install.mjs",
-    "prepack": "npm run build",
-    "check": "npm run build && tsc --noEmit && npm test && npm run test:learning"
+    "check": "npm run build && tsc --noEmit && npm test && npm run test:learning",
+    "pack:plugin": "npm run build && npm pack --pack-destination dist"
   },
   "devDependencies": {
     "@deepseek-ai/dsh": "0.2.1-alpha.2",

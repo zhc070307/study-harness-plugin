@@ -13,7 +13,7 @@
 
 ## 下载和安装
 
-**[下载插件安装包（0.1.1）](https://github.com/zhc070307/study-harness-plugin/raw/refs/heads/main/downloads/study-agent-harness-plugin-0.1.1.tgz)** · **[按步骤安装](docs/install.md)**
+**[下载插件安装包（0.1.2）](https://github.com/zhc070307/study-harness-plugin/raw/refs/heads/main/downloads/study-agent-harness-plugin-0.1.2.tgz)** · **[按步骤安装](docs/install.md)**
 
 这是已经构建好的插件包，使用时无需自己下载源码或编译。仓库目前为私有仓库，下载时需要登录有访问权限的 GitHub 账号。支持 Harness `0.2.0-rc.2`（默认发布版）和 `0.2.1-alpha.2`（实验版）。
 

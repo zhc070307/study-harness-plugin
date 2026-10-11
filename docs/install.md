@@ -4,7 +4,7 @@
 
 ## 1. 下载插件
 
-点击[下载插件安装包（0.1.1）](https://github.com/zhc070307/study-harness-plugin/raw/refs/heads/main/downloads/study-agent-harness-plugin-0.1.1.tgz)，保存到电脑的“下载”文件夹。
+点击[下载插件安装包（0.1.2）](https://github.com/zhc070307/study-harness-plugin/raw/refs/heads/main/downloads/study-agent-harness-plugin-0.1.2.tgz)，保存到电脑的“下载”文件夹。
 
 这是已经构建好的插件包，无需下载源码或自行编译。保留 `.tgz` 压缩包，安装时直接使用它。
 
@@ -23,17 +23,17 @@
 
 路径示例（把“你的用户名”换成实际用户名）：
 
-- macOS：`/Users/你的用户名/Downloads/study-agent-harness-plugin-0.1.1.tgz`
-- Windows：`C:/Users/你的用户名/Downloads/study-agent-harness-plugin-0.1.1.tgz`
+- macOS：`/Users/你的用户名/Downloads/study-agent-harness-plugin-0.1.2.tgz`
+- Windows：`C:/Users/你的用户名/Downloads/study-agent-harness-plugin-0.1.2.tgz`
 
-输入框里只填路径，不加引号。安装需要联网获取依赖。如果之前安装了 0.1.0，请先在插件页卸载旧包，再安装 0.1.1；项目里的学习记录会保留。
+输入框里只填路径，不加引号。安装需要联网获取依赖。如果之前安装了旧版，请先在插件页卸载旧包，再安装 0.1.2；项目里的学习记录会保留。
 
 ### 网页版
 
 在运行 Harness 的电脑上下载插件包，再运行下面的命令，将路径换成实际路径：
 
 ```sh
-dsh plugin --profile web add "/完整路径/study-agent-harness-plugin-0.1.1.tgz"
+dsh plugin --profile web add "/完整路径/study-agent-harness-plugin-0.1.2.tgz"
 ```
 
 使用自定义配置时，将 `web` 换成对应的名称。远程服务器上运行的 Harness，需要把包放在服务器上。
@@ -76,8 +76,9 @@ Web 或自定义宿主没有内置 Python 时，插件会尝试使用已有的�
 | 找不到安装文件 | 输入的是安装包实际完整路径，而不是示例用户名或解压目录。 |
 | 插件已安装，但没有学习工具 | 插件是否启用、Harness 是否重启、当前项目是否绑定。 |
 | 依赖安装失败 | 让助手报告实际缺失项；检查网络或环境写入权限后再重试。 |
-| 提示版本不兼容 | 是否下载了新版 0.1.1，以及 Harness 是否为上述支持版本。 |
+| 提示版本不兼容 | 是否下载了新版 0.1.2，以及 Harness 是否为上述支持版本。 |
 | 提示 `failed to import` | 插件模块加载失败，需要查看具体错误；这一步还没有开始准备 Python 依赖。 |
+| 提示 `ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED` | 正在安装旧版源码；改用上面的 0.1.2 安装包。无需修改 `allowBuilds`。 |
 
 反馈问题时，提供操作系统、Harness 版本和实际错误提示。
 

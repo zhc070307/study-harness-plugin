@@ -8,6 +8,8 @@
 
 ## 构建与安装
 
+0.1.2 起，源码仓库也包含构建后的 `lib`，没有安装时构建脚本。从 GitHub 仓库安装不需要额外允许构建；普通用户仍建议使用 [现成安装包](install.md)。开发修改后须先运行构建，并把生成文件一起提交。打包可以运行 `npm run pack:plugin`（先创建 `dist` 目录）。
+
 需要 Node.js 24+；普通学习功能需要 Python 3.10+，录音转写后台需要 Python 3.12。建议统一使用 Python 3.12。
 
 ```sh
@@ -24,7 +26,7 @@ Windows 的虚拟环境解释器为 `.venv/Scripts/python.exe`。`requirements.t
 在实际使用的 Harness profile 中安装生成的包，例如 Web：
 
 ```sh
-dsh plugin --profile web add /absolute/path/study-agent-harness-plugin-0.1.1.tgz
+dsh plugin --profile web add /absolute/path/study-agent-harness-plugin-0.1.2.tgz
 ```
 
 Desktop 使用其内置插件管理器，或 Desktop 安装提供的命令管理 `desktop` profile；npm CLI 不管理 Desktop profile。安装在其他 profile 中不会自动影响 Desktop。
