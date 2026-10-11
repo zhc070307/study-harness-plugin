@@ -1,128 +1,102 @@
 # Study Harness Plugin
 
-独立的 DeepSeek Harness 学习插件。使用 Harness 的窗口、文件工作区、会话和模型服务，提供课程与学期、材料整理、教材检索、笔记与练习、作答反馈、录音转写和外部日历。无需运行 Study Agent 的独立桌面应用。
+在 DeepSeek Harness 里使用的学习助手。把课件、教材、作业和课堂记录放进一个学习项目，就可以直接在聊天中让它帮你解释内容、整理笔记、准备练习和跟进学习任务。
 
-本仓库从 Study Agent 选取学习领域源码独立维护，来源见 [SOURCE.json](SOURCE.json)。不包含 Harness runtime；插件调用宿主提供的公开包接口。当前适配并测试的官方版本是 **0.2.1-alpha.2**，版本不匹配时应先更新适配，不能靠忽略版本检查安装。
+你继续使用 Harness 的聊天和文件窗口。材料、笔记和学习记录保存在自己的项目里，可以随时打开查看。
 
-## 构建与安装
+## 它能帮你做什么
 
-需要 Node.js 24+；普通学习功能需要 Python 3.10+，录音转写后台需要 Python 3.12。建议统一使用 Python 3.12。
+- **围绕你的课程学习。** 根据实际课件和教材解释概念、查找相关内容，保留材料来源，方便你回到原文核对。
+- **整理笔记和准备练习。** 根据你指定的范围整理笔记、选题或制作练习；收到你的作答后，给出反馈并记录需要复习的地方。
+- **换个对话也能接着学。** 同一项目下的对话共用课程、任务、学习偏好和已保存的材料摘要，减少重复介绍背景。
+- **跟进任务和学期。** 查看还有哪些事情没做完，记录进度，按学期管理材料和任务。生成了一份笔记或练习，不会因此把你的学习任务算作完成。
 
-```sh
-npm ci
-python3.12 -m venv .venv
-.venv/bin/python -m pip install -r requirements.txt
-npm run build
-mkdir -p dist
-npm pack --pack-destination dist
-```
+## 下载和安装
 
-Windows 的虚拟环境解释器为 `.venv/Scripts/python.exe`。`requirements.txt` 包含 PDF 渲染、图像、CalDAV 和时区依赖，不下载转写模型。
+**[下载插件安装包（0.1.0）](https://github.com/zhc070307/study-harness-plugin/raw/refs/heads/main/downloads/study-agent-harness-plugin-0.1.0.tgz)** · **[按步骤安装](docs/install.md)**
 
-在实际使用的 Harness profile 中安装生成的包，例如 Web：
+这是已经构建好的插件包，使用时无需自己下载源码或编译。仓库目前为私有仓库，下载时需要登录有访问权限的 GitHub 账号。已验证的 Harness 版本为 `0.2.1-alpha.2`。
 
-```sh
-dsh plugin --profile web add /absolute/path/study-agent-harness-plugin-0.1.0.tgz
-```
+第一次安装分三步：
 
-Desktop 使用其内置插件管理器，或 Desktop 安装提供的命令管理 `desktop` profile；npm CLI 不管理 Desktop profile。安装在其他 profile 中不会自动影响 Desktop。
+1. 下载上面的 `.tgz` 文件，按照安装指南准备 Python 环境。
+2. 在 Harness 侧栏打开 **插件 → 添加插件**，填入下载文件的完整路径，点击安装并启用。
+3. 按指南设置 Python 路径，重启 Harness，再打开你的学习项目。
 
-在插件配置中将 `python` 指向上述虚拟环境解释器的绝对路径。默认值为 `python3`。通过 profile patch 配置时：
+[安装指南](docs/install.md)分别提供 macOS/Linux 和 Windows 的步骤，也说明网页版如何安装。Python 环境只需准备一次；录音转写和日历可以以后再启用。
 
-```yaml
-- id: study-projects
-  config:
-    python: /absolute/path/.venv/bin/python
-```
+## 怎么开始学习
 
-插件代码运行在宿主进程中，Python 工具在本机处理事务和编译。因此显式学习工具使用宿主的 `danger-full-access` 权限或本次操作审批，不自动改变会话权限；拒绝或没有审批通道时不会执行。自动注入的项目状态只读，不初始化数据库。
+安装好后，日常使用只需要在聊天里提出要求：
 
-## 绑定学习项目
+1. **打开一个学习项目。** 在 Harness 中打开你准备存放学习材料的文件夹。
+2. **启用学习助手。** 对它说：“把这个项目绑定为学习项目。”绑定一次后，在这个项目下新开的对话也会启用学习助手。
+3. **放入材料。** 上传课件、教材或作业，或者把文件放在项目文件夹中，再告诉它要使用哪些材料。
+4. **开始学习。** 直接提问、要求整理笔记，或者提交你的答案请它批改。
 
-安装一次后，可在当前会话中要求助理“把这个项目绑定为学习项目”；也可运行：
+例如，第一次可以这样说：
 
-```sh
-node lib/cli.js bind /absolute/path/learning-project
-node lib/cli.js status /absolute/path/learning-project
-node lib/cli.js doctor /absolute/path/learning-project /absolute/path/.venv/bin/python
-```
+> 把这个项目绑定为学习项目。这是我的线性代数课件，请先看内容，帮我建立这门课的材料记录。我今天想弄懂特征值，不用先做学习计划。
 
-绑定保存为项目目录中的 `.study-plugin.json`：
+## 可以怎样和它说
 
-```json
-{"version":1,"enabled":true,"data":"."}
-```
+**看材料、问问题：**
 
-该项目及其子目录下的对话自动获得学习工具和提示词。未绑定项目只看到绑定工具，保持原来的模型行为。子目录可显式停用；学习数据目录必须位于绑定项目内部，不接受目录穿越或符号链接逃逸。配置更改会在下一次请求生效。
+> 读一下我刚上传的讲义，解释第三节的概念，给我一个简单例子，并告诉我对应哪一页。
 
-课程成果保存并发布到真实工作区中的课程目录，直接在 Harness 文件窗口打开。已有工作区文件用 `study_import path` 导入；当前聊天上传的文件用 `study_import attachment_id` 导入，宿主校验文件身份与字节，原件保留。同一源文件同一版本重复导入复用记录。
+**整理笔记：**
 
-每个会话首次使用学习工具时绑定当前学期，之后保持自己的选择。`study_desktop semester select` 只切换当前会话，其他会话保持各自学期；选择可在重启后恢复。数据沿用 `.study-system`、`.workspace` 和 `.semesters` 布局，可处理原应用的数据副本。
+> 根据这份课件整理一份复习笔记，重点放在证明思路，保存到这门课的文件夹里。
 
-## 跨对话上下文
+**做练习、看反馈：**
 
-每次模型请求前读取当前学期的课程、未完成任务、学习流程、已登记材料、约定和共享摘要。内容变化或会话上下文重建时重新注入，未变化时复用已有记录。
+> 从教材这一章选几道适合练习的题，保留题目来源，先不要给答案。
+>
+> 这是我的作答。请检查推理过程，解释错误，并记下下次需要复习的地方。
 
-`study_context remember` 保存实际读过的材料摘要，带来源路径与 SHA-256。其他对话可以直接读取；原文变化或来源消失时标记为过期，要求重新核对原文。它不自动复制所有聊天历史，也不把生成的文件当作用户已经完成学习。当前状态摘要有数量限制，详细资料继续通过学习工具读取。
+**接着上次的学习：**
 
-## 录音转写
+> 看一下这个项目的课程和任务记录，告诉我还有哪些没完成。
+>
+> 把刚才读过的这份讲义的关键内容保存成共享摘要，方便我在新对话里继续讨论。
 
-`study_transcribe` 提供 check、status、start、stop。插件按需管理绑定 `127.0.0.1` 的鉴权后台，使用随机端口，不要求单独启动桌面程序。卸载插件时关闭其后台，学习记录和已完成片段保留。
+笔记和练习保存后，可以在 Harness 的文件窗口中打开。原始材料会保留，同一版本的材料重复导入时会复用已有记录。
 
-已有文字稿直接读取。检测实际 GPU、内存、显存和磁盘后才允许开始；不支持的设备不自动回退到 CPU。首次 `start` 需要用户同意下载环境和约 3.8 GiB 模型，才能传 `allow_install:true`。GPU 支持 Apple Silicon Metal 和 Windows/Linux x64 NVIDIA，具体资源检查沿用现有实现。
+## 换一个对话，它记得什么
 
-Python 环境中的 PDF、日历依赖与转写推理环境分开管理。后台任务状态可通过工具读取，完成原稿关联回源录音；停止、重启和失败保留可恢复记录。
+它会读取这个项目已经保存的课程、任务、学习约定和材料摘要。例如，你明确保存了“这门课先解释思路，再看计算”的偏好，后续对话就可以参考它。
 
-## 外部日历
+共享的是保存下来的学习记录，并非每一段聊天都会自动成为长期记忆。重要的结论或偏好，可以明确说“把这个保存下来，后续对话继续参考”。材料更新后，旧摘要会标记为需要重新核对。
 
-`study_calendar` 支持 status、calendars、list、read、create、update、delete。事件与学习任务分别记录，可以关联真实任务身份。非全天事件必须带时区；全天事件结束日期不含边界。更新和删除须提供当前事件版本，冲突拒绝。重复系列不提供批量改写。
+同一项目内，各个对话也可以分别讨论不同学期。切换当前对话的学期，不会同时切换其他对话。
 
-### CalDAV
+## 附加功能
 
-在项目绑定文件中增加：
+以下功能按需启用，整理材料、提问、笔记和练习都可以独立使用。
 
-```json
-{
-  "version":1,"enabled":true,"data":".",
-  "calendar":{
-    "provider":"caldav",
-    "url":"https://calendar.example/dav/calendars/user/study/",
-    "usernameEnv":"STUDY_CALDAV_USERNAME",
-    "passwordEnv":"STUDY_CALDAV_PASSWORD"
-  }
-}
-```
+### 课堂录音转写
 
-凭证通过启动 Harness 的环境变量提供，配置文件不存密码。URL 指向具体日历集合；远程连接要求 HTTPS，拒绝自动重定向。查询用 CalDAV REPORT，创建使用稳定 UID 和 `If-None-Match`，更新/删除使用 ETag 与 `If-Match`。本地操作日志防止重复写入；中断后结果不明时要求先查询真实事件，不自动重发。
+可以导入课堂录音，在本机转成文字，再结合课件整理。已有文字稿可以直接使用。
 
-### macOS Apple Calendar
+> 先检查我的电脑能否转写这份录音。如果支持，告诉我需要下载什么；我确认后再开始。
 
-macOS 14+，需要 Xcode Command Line Tools 构建 EventKit 辅助程序：
+转写需要受支持的 GPU，例如 Apple Silicon Mac 或配备 NVIDIA 显卡的 Windows/Linux 电脑，也需要足够的内存和磁盘空间。首次使用需要下载约 3.8 GiB 的模型；助手会先检查设备并征求下载同意。真实录音识别仍需在对应设备上验证。
 
-```sh
-bash packages/learning/tools/calendar-events/build-plugin.sh
-```
+### 外部日历（可选）
 
-绑定配置增加：
+配置好日历后，可以查看实际日程，或按你的要求添加、修改和删除学习安排。
 
-```json
-{"provider":"apple","executable":"/absolute/path/packages/learning/tools/calendar-events/study-calendar"}
-```
+> 看一下已连接的日历，确认周六下午有没有安排。如果空闲，帮我添加一小时的线性代数复习。
 
-此对象放在 `calendar` 字段中。系统会请求日历授权，工具只按指定动作处理事件。原 `calendar-events` 工具仍保留只读行为。Apple 适配器的实际编译、系统授权和真实日历写入需要在 macOS 验证。
+目前提供两种接入方式：
 
-## 验证
+- **Apple Calendar：** 适用于 macOS 14 及以上，需要额外安装日历辅助程序并获得系统授权。这个接入方式仍需在 macOS 上完成实机验证。
+- **CalDAV 日历：** 适用于提供 CalDAV 接口的日历服务，需要配置服务地址和账号。已通过本地测试，实际可用性仍需连接你的日历服务确认。
 
-```sh
-npm run check
-npm pack --pack-destination dist
-npm run test:install
-```
+日历需要单独配置，不是安装插件后就会自动连接。没有配置时，助手不会知道你的日程。当前没有 Google Calendar 或 Outlook 的专用连接，也不提供定时提醒；添加一个日历安排不代表已经完成学习任务。
 
-检查构建和 TypeScript，使用官方发布的 Harness 服务运行项目隔离、实时绑定、共享状态、附件导入和权限拒绝测试；CalDAV 测试通过临时本地 HTTP 服务验证实际读写与 ETag 冲突，Python 领域测试只使用隔离数据。
+接入方法见[日历配置说明](docs/setup.md#外部日历)。
 
-安装测试在临时 `DSH_HOME` 中建立官方最小 profile，安装真实 tarball、检查插件配置并启动 Harness，结束后清理，不修改当前用户的配置。首次安装可能需要网络访问 npm registry。
+## 安装与开发
 
-需要真实设备或账户的验证包括 GPU 模型下载与识别、macOS EventKit 编译与授权，以及目标日历服务的连接。上述测试不会下载大模型、访问个人日历或修改真实学习资料。
-
-发布包包含必要 Python 源码、迁移、学习规范和转写资源，不包含独立 UI、Harness runtime、开发依赖、个人数据或模型权重。
+需要安装插件、配置录音或日历，或者查看测试方法，请阅读[安装、配置与开发说明](docs/setup.md)。

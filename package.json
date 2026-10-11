@@ -33,6 +33,7 @@
     "cordis.patch.yml",
     "requirements.txt",
     "README.md",
+    "docs",
     "LICENSE",
     "THIRD_PARTY_NOTICES.md",
     "SOURCE.json"
