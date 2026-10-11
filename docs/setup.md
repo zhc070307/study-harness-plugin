@@ -4,7 +4,7 @@
 
 独立的 DeepSeek Harness 学习插件。使用 Harness 的窗口、文件工作区、会话和模型服务，提供课程与学期、材料整理、教材检索、笔记与练习、作答反馈、录音转写和外部日历。无需运行 Study Agent 的独立桌面应用。
 
-本仓库从 Study Agent 选取学习领域源码独立维护，来源见 [SOURCE.json](../SOURCE.json)。不包含 Harness runtime；插件调用宿主提供的公开包接口。当前适配并测试的官方版本是 **0.2.1-alpha.2**，版本不匹配时应先更新适配，不能靠忽略版本检查安装。
+本仓库从 Study Agent 选取学习领域源码独立维护，来源见 [SOURCE.json](../SOURCE.json)。不包含 Harness runtime；插件调用宿主提供的公开包接口。当前支持的官方版本是 **0.2.0-rc.2** 和 **0.2.1-alpha.2**，版本不匹配时应先更新适配，不能靠忽略版本检查安装。
 
 ## 构建与安装
 
@@ -24,18 +24,29 @@ Windows 的虚拟环境解释器为 `.venv/Scripts/python.exe`。`requirements.t
 在实际使用的 Harness profile 中安装生成的包，例如 Web：
 
 ```sh
-dsh plugin --profile web add /absolute/path/study-agent-harness-plugin-0.1.0.tgz
+dsh plugin --profile web add /absolute/path/study-agent-harness-plugin-0.1.1.tgz
 ```
 
 Desktop 使用其内置插件管理器，或 Desktop 安装提供的命令管理 `desktop` profile；npm CLI 不管理 Desktop profile。安装在其他 profile 中不会自动影响 Desktop。
 
-在插件配置中将 `python` 指向上述虚拟环境解释器的绝对路径。默认值为 `python3`。通过 profile patch 配置时：
+发布包默认 `python: auto`，优先使用官方 `load_workspace_dependencies` 返回的解释器（Desktop 的可写运行时副本），已有运行时会复用。首次授权执行学习工具前调用 `plugin_dependencies.py`：导入检查实际可用性，只有缺失包才传给当前解释器的 `pip`；已有可用版本不主动升级。跨进程锁避免多个对话同时安装。失败如实返回并允许重试，不自动绕过环境写入或包管理限制。
+
+自动的项目上下文读取不会安装依赖。`study_environment check/install` 可显式查询或重试。CLI 提供 `node lib/cli.js check-dependencies [PYTHON]` 和 `node lib/cli.js setup [PYTHON]`。脚本本身也可以用所选解释器执行：
+
+```sh
+/path/to/harness/python packages/agent/plugin_dependencies.py
+/path/to/harness/python packages/agent/plugin_dependencies.py --install
+```
+
+Web/自定义宿主没有官方解释器查询工具时，先找 Harness 主目录内已有的运行时，再使用 `python3`（Windows 为 `python`）。可通过配置覆盖所用解释器：
 
 ```yaml
 - id: study-projects
   config:
-    python: /absolute/path/.venv/bin/python
+    python: /absolute/path/to/existing/python
 ```
+
+上面的虚拟环境命令供源码开发与测试使用，桌面用户安装发布包不需要这些步骤。录音推理环境和大模型继续按原转写流程单独管理。
 
 插件代码运行在宿主进程中，Python 工具在本机处理事务和编译。因此显式学习工具使用宿主的 `danger-full-access` 权限或本次操作审批，不自动改变会话权限；拒绝或没有审批通道时不会执行。自动注入的项目状态只读，不初始化数据库。
 

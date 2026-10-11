@@ -6,11 +6,12 @@ import { randomUUID } from 'node:crypto'
 /** One loopback service per project. Large models are downloaded only by start + consent. */
 export class TranscriptionHosts {
   private hosts = new Map<string, { process: ChildProcess; config: string; ready: Promise<string> }>()
-  constructor(private python: string, private script: string) {}
+  constructor(private python: () => Promise<string>, private script: string) {}
 
   config(data: string): string | undefined { return this.hosts.get(data)?.config }
 
   async start(data: string, signal?: AbortSignal): Promise<string> {
+    const python = await this.python()
     const current = this.hosts.get(data)
     if (current) return current.ready
     const directory = join(data, '.transcription')
@@ -18,7 +19,7 @@ export class TranscriptionHosts {
     const config = join(directory, `connection-${randomUUID()}.json`)
     const log = join(directory, 'host.log')
     const fd = openSync(log, 'a', 0o600)
-    const child = spawn(this.python, [this.script, '--bind', '127.0.0.1', '--port', '0', '--data', join(directory, 'host'), '--config', config], { stdio: ['ignore', fd, fd], env: { ...process.env, PYTHONUTF8: '1' } })
+    const child = spawn(python, [this.script, '--bind', '127.0.0.1', '--port', '0', '--data', join(directory, 'host'), '--config', config], { stdio: ['ignore', fd, fd], env: { ...process.env, PYTHONUTF8: '1' } })
     closeSync(fd)
     let failure: Error | undefined
     child.on('error', error => { failure = error })

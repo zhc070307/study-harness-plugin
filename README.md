@@ -13,17 +13,17 @@
 
 ## 下载和安装
 
-**[下载插件安装包（0.1.0）](https://github.com/zhc070307/study-harness-plugin/raw/refs/heads/main/downloads/study-agent-harness-plugin-0.1.0.tgz)** · **[按步骤安装](docs/install.md)**
+**[下载插件安装包（0.1.1）](https://github.com/zhc070307/study-harness-plugin/raw/refs/heads/main/downloads/study-agent-harness-plugin-0.1.1.tgz)** · **[按步骤安装](docs/install.md)**
 
-这是已经构建好的插件包，使用时无需自己下载源码或编译。仓库目前为私有仓库，下载时需要登录有访问权限的 GitHub 账号。已验证的 Harness 版本为 `0.2.1-alpha.2`。
+这是已经构建好的插件包，使用时无需自己下载源码或编译。仓库目前为私有仓库，下载时需要登录有访问权限的 GitHub 账号。支持 Harness `0.2.0-rc.2`（默认发布版）和 `0.2.1-alpha.2`（实验版）。
 
 第一次安装分三步：
 
-1. 下载上面的 `.tgz` 文件，按照安装指南准备 Python 环境。
+1. 下载上面的 `.tgz` 文件。
 2. 在 Harness 侧栏打开 **插件 → 添加插件**，填入下载文件的完整路径，点击安装并启用。
-3. 按指南设置 Python 路径，重启 Harness，再打开你的学习项目。
+3. 重启 Harness，打开学习项目，对助手说“把这个项目绑定为学习项目”。
 
-[安装指南](docs/install.md)分别提供 macOS/Linux 和 Windows 的步骤，也说明网页版如何安装。Python 环境只需准备一次；录音转写和日历可以以后再启用。
+首次使用学习工具时，插件会复用 Harness 提供的 Python，检查已有依赖，只补装缺少的包。桌面版无需另建 Python 环境或手填解释器路径。录音模型和日历仍按需单独启用，具体步骤见[安装指南](docs/install.md)。
 
 ## 怎么开始学习
 

@@ -5,6 +5,7 @@ __pycache__/
 *.py[cod]
 *.tgz
 !downloads/study-agent-harness-plugin-0.1.0.tgz
+!downloads/study-agent-harness-plugin-0.1.1.tgz
 .venv/
 .build/
 .study-plugin.json

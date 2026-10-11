@@ -3,33 +3,45 @@ import type { Context } from '@deepseek-ai/cordis'
 import type { Agent } from '@deepseek-ai/dsh-agent'
 import type { ToolExecution, ParameterSchemaSpec } from '@deepseek-ai/dsh-tools'
 import { defineTool } from '@deepseek-ai/dsh-tools'
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
+import { createUserMessage, ToolCallId } from '@deepseek-ai/dsh-llm'
 import { createScope, type Scope } from '@deepseek-ai/dsh-scope'
 import { approveEscalation } from '@deepseek-ai/dsh-sandbox'
 import type {} from '@deepseek-ai/dsh-sandbox-policy'
 import type {} from '@deepseek-ai/dsh-user-approval'
 import { writeFile, rename } from 'node:fs/promises'
 import { realpathSync, readFileSync, existsSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { resolve, isAbsolute } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { randomUUID } from 'node:crypto'
 import * as Study from '../packages/agent/study.ts'
 import { BINDING_FILE, projectFor, type Project } from './projects.ts'
 import { jsonProcess } from './process.ts'
 import { TranscriptionHosts } from './transcription-host.ts'
+import { PythonEnvironment, installedHarnessPython } from './environment.ts'
 
 export const name = 'study-projects'
 export const inject = ['agents', 'tools', 'systemPrompt', 'sandboxPolicy']
 export interface Config { python?: string }
-export const Config = z.object({ python: z.string().default('python3') })
+export const Config = z.object({ python: z.string().default('auto') })
 const bridge = fileURLToPath(new URL('../packages/agent/plugin_bridge.py', import.meta.url))
 const host = fileURLToPath(new URL('../packages/transcription/host.py', import.meta.url))
 const output = { schema: { type: 'object' as const, additionalProperties: true }, render: (_args: object, value: object) => [{ type: 'text' as const, text: JSON.stringify(value) }] }
 
 export function apply(ctx: Context, config: Config = {}): void {
-  const python = config.python ?? 'python3'
-  const hosts = new TranscriptionHosts(python, host)
+  const environment = new PythonEnvironment(config.python)
+  const hosts = new TranscriptionHosts(() => environment.resolve(), host)
   const mounted = new Map<Agent, { project: Project; scope: Scope; supplied?: string; generation?: number }>()
+
+  async function selectPython(exec: ToolExecution): Promise<string> {
+    return environment.resolve(ctx.tools.get('load_workspace_dependencies', exec.agent) ? async () => {
+      const result = await ctx.tools.execute({ name: 'load_workspace_dependencies', arguments: {}, agent: exec.agent,
+        parent: exec.token, rootCallId: exec.rootCallId, callId: ToolCallId(`${exec.callId}:python`), signal: exec.signal })
+      if (result.isError) throw new Error(result.content.map(block => block.type === 'text' ? block.text : '').join('\n'))
+      const value = result.value as { python?: string }
+      if (!value.python || !isAbsolute(value.python) || !existsSync(value.python)) throw new Error('Harness 没有返回可用的 Python 解释器')
+      return value.python
+    } : undefined)
+  }
 
   async function authorize(exec: ToolExecution): Promise<void> {
     const policy = ctx.sandboxPolicy.resolve(exec.agent ? { session: exec.agent.session } : {})
@@ -49,6 +61,7 @@ export function apply(ctx: Context, config: Config = {}): void {
     const scope = createScope(ctx, agent)
     mounted.set(agent, { project, scope })
     async function call(action: string, args: object, id: string, signal?: AbortSignal, desktop = false) {
+      const python = await environment.resolve()
       const input = args as Record<string, any>
       let connection = hosts.config(project!.data)
       if (action === 'transcribe' && input.action === 'start') {
@@ -59,12 +72,17 @@ export function apply(ctx: Context, config: Config = {}): void {
       return jsonProcess(python, bridge, project!.data, { action, args: { ...input, session: agent.session.id }, id, desktop, project: project!.root, calendar: project!.calendar }, signal,
         { ...process.env, STUDY_PDFIUM: '1', STUDY_TRANSCRIBE_CONFIG: connection ?? '' })
     }
-    Study.apply(scope.ctx, { data: project.data, python, bridge: call, host: true })
+    Study.apply(scope.ctx, { data: project.data, bridge: call, host: true })
     scope.ctx.on('tools/execute', async (exec, next) => {
-      if (exec.name.startsWith('study_') && exec.name !== 'study_project') await authorize(exec)
+      if (exec.name.startsWith('study_') && exec.name !== 'study_project') {
+        await authorize(exec)
+        await selectPython(exec)
+        if (exec.name !== 'study_environment') await environment.ensure(exec.signal)
+      }
       return next()
     })
     const extraTools: { name: string; description: string; action: string; parameters: ParameterSchemaSpec }[] = [
+      { name: 'study_environment', description: 'check 查看学习插件依赖和正在使用的 Python；install 复用 Harness 的 Python，只安装缺少的依赖，已有包不升级。正常使用学习工具时也会自动补装。此操作不下载录音模型。', action: 'environment', parameters: { action: { type: 'string', enum: ['check','install'], required: true } } },
       { name: 'study_import', description: '导入本项目已有的课程材料或录音，保留原件、文件身份和版本。同一文件同一版本重复导入复用记录。path 是项目内路径；也可传当前对话文件附件的 attachment_id。expected 可核对源文件 sha256。', action: 'import', parameters: { path: { type: 'string' }, attachment_id: { type: 'string' }, expected: { type: 'string' } } },
       { name: 'study_context', description: '读取本项目共享状态，或 remember 保存其他对话也能读到的材料摘要。summary 仅保存实际读过的内容；sources:[{path,sha256}] 保留学期内来源，源文件变化时摘要标为过期。保存须传读取结果的 expected 版本。学习约定请用 study_desktop agreement。', action: 'context', parameters: { action: { type: 'string', enum: ['read','remember'], required: true }, input: { type: 'string', required: true, description: 'JSON对象。read:{}；remember:{key,summary,sources:[{path,sha256}],expected}。' } } },
       { name: 'study_calendar', description: '查询或管理实际外部日历。先 status/calendars 核对连接，list/read 核对真实事件；create/update/delete 只依用户要求执行。写操作不证明学习任务完成。update/delete 必须使用读取结果的 expected；仅修改指定事件，重复系列不支持批量改写。未配置或访问失败要如实说明。', action: 'calendar', parameters: { action: { type: 'string', enum: ['status','calendars','list','read','create','update','delete'], required: true }, input: { type: 'string', required: true, description: 'JSON对象。list:{start,end}（带时区ISO8601）；read:{id}；create:{title,start,end,all_day?,notes?,location?,task?}；update:{id,expected,title,start,end,all_day?,notes?,location?}；delete:{id,expected}。全天事件使用YYYY-MM-DD，end不含边界。' } } },
@@ -72,6 +90,7 @@ export function apply(ctx: Context, config: Config = {}): void {
     for (const tool of extraTools) {
       scope.ctx.effect(() => scope.ctx.tools.register(defineTool({ name: tool.name, description: tool.description, parameters: tool.parameters, output,
         async execute(args: any, exec) {
+          if (tool.action === 'environment') return args.action === 'install' ? environment.ensure(exec.signal) : environment.check(exec.signal)
           if (tool.action === 'import' && args.attachment_id) {
             if (args.path) throw new Error('请提供文件路径或附件身份其中之一')
             const ref = agent.session.deriveMessages().flatMap(message => message.role === 'user' ? message.content : []).find(block => block.type === 'file' && block.attachment.attachmentId === args.attachment_id)
@@ -130,7 +149,13 @@ export function apply(ctx: Context, config: Config = {}): void {
     const decision = await next()
     const entry = mounted.get(agent)
     if (!entry || decision.kind === 'reject' || signal.aborted) return decision
-    const value = await jsonProcess(python, bridge, entry.project.data, { action: 'context', args: { session: agent.session.id } }, signal)
+    // Bootstrapping and pip run through explicit tools; a model request never installs dependencies.
+    if (!environment.current && (!config.python || config.python === 'auto') && ctx.tools.get('load_workspace_dependencies', agent)) {
+      const installed = installedHarnessPython()
+      if (!installed) return decision
+      await environment.resolve()
+    }
+    const value = await jsonProcess(await environment.resolve(), bridge, entry.project.data, { action: 'context', args: { session: agent.session.id } }, signal)
     const text = JSON.stringify(value)
     const generation = agent.session.surface.contentGeneration
     if (entry.supplied === text && entry.generation === generation) return decision

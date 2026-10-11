@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, rmSync, mkdirSync } from 'node:fs'
+import { mkdtempSync, rmSync, mkdirSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve, join } from 'node:path'
 import assert from 'node:assert/strict'
@@ -20,7 +20,8 @@ function run(args, cwd = process.cwd()) {
   return result.stdout
 }
 try {
-  const archive = resolve(process.argv[2] ?? 'dist/study-agent-harness-plugin-0.1.0.tgz')
+  const { version } = JSON.parse(readFileSync('package.json', 'utf8'))
+  const archive = resolve(process.argv[2] ?? `dist/study-agent-harness-plugin-${version}.tgz`)
   run(['--profile', profile, '--from-default-profile', 'sdk-minimal', '--dump-config'])
   run(['plugin', '--profile', profile, 'add', archive])
   assert.match(run(['--profile', profile, '--dump-config']), /study-projects/)

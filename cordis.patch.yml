@@ -2,4 +2,4 @@
     - id: study-projects
       name: '@study-agent/harness-plugin'
       config:
-        python: python3
+        python: auto

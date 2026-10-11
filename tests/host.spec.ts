@@ -5,8 +5,10 @@ import { ToolCallId, LlmAdapter, createUserMessage, type GenerateOptions, type S
 import SandboxPolicy, { setSandboxMode } from '@deepseek-ai/dsh-sandbox-policy'
 import Attachments from '@deepseek-ai/dsh-attachment-local'
 import Persistence from '@deepseek-ai/dsh-session-persistence-jsonl'
+import * as WorkspaceDependencies from '@deepseek-ai/dsh-tool-workspace-dependencies'
 import { mountAgentLoopTestDependencies, mountAgentLoopTestHarness } from '@deepseek-ai/dsh-agent-loop-testkit'
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync, symlinkSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import * as Plugin from '../lib/index.js'
@@ -17,7 +19,7 @@ afterEach(async()=>{
   for(const ctx of contexts.splice(0)) await ctx.fiber.dispose()
   for(const directory of directories.splice(0)) rmSync(directory,{recursive:true,force:true})
 })
-async function runtime(bound=true) {
+async function runtime(bound=true,python='python3') {
   const directory=mkdtempSync(join(tmpdir(),'study-host-'));directories.push(directory)
   const project=join(directory,'project'),other=join(directory,'other');mkdirSync(project);mkdirSync(other)
   if(bound)writeFileSync(join(project,'.study-plugin.json'),JSON.stringify({version:1,enabled:true,data:'.'}))
@@ -25,7 +27,7 @@ async function runtime(bound=true) {
   await mountAgentLoopTestDependencies(ctx,{tools:{mode:'native'}})
   await ctx.plugin(SandboxPolicy,{mode:'danger-full-access',workspaceRoot:project})
   await ctx.plugin(Persistence,{root:join(directory,'sessions')})
-  await ctx.plugin(Plugin,{python:'python3'})
+  await ctx.plugin(Plugin,{python})
   const harness=await mountAgentLoopTestHarness(ctx)
   const agent=await harness.create(SessionId('learning'),{}, {cwd:project})
   const stranger=await harness.create(SessionId('other'),{}, {cwd:other})
@@ -50,6 +52,28 @@ it('loads the built plugin into published Harness services and isolates project 
   expect(prompt.sections.some(s=>s.name==='study')).toBe(true)
   const otherPrompt=await ctx.systemPrompt.assemble({agent:stranger,scope:stranger})
   expect(otherPrompt.sections.some(s=>s.name==='study')).toBe(false)
+})
+
+it('uses the official Harness Python loader automatically and reports reused dependencies',async()=>{
+  const {ctx,agent,project}=await runtime(true,'auto')
+  const info=JSON.parse(execFileSync('python3',['-c','import sys,json; print(json.dumps({"python":sys.executable,"version":".".join(map(str,sys.version_info[:3]))}))'],{encoding:'utf8'}))
+  const source=join(project,'host-runtime'),base=join(source,'dependencies','python')
+  mkdirSync(join(base,'bin'),{recursive:true})
+  mkdirSync(join(base,'lib',`python${info.version.split('.').slice(0,2).join('.')}`,'site-packages'),{recursive:true})
+  const python=join(base,'bin','python3')
+  symlinkSync(info.python,python)
+  writeFileSync(join(source,'runtime.json'),JSON.stringify({desktopVersion:'test',platform:process.platform,arch:process.arch,python:info.version,pythonPackages:{}}))
+  await ctx.plugin(WorkspaceDependencies,{source})
+  const result=await call(ctx,agent,'study_environment',{action:'check'})
+  expect(result.isError,JSON.stringify(result)).toBe(false)
+  const report=JSON.parse((result.content[0] as any).text)
+  expect(report.python).toBe(python)
+  expect(report.missing).toEqual([])
+  const install=await call(ctx,agent,'study_environment',{action:'install'})
+  expect(install.isError,JSON.stringify(install)).toBe(false)
+  expect(JSON.parse((install.content[0] as any).text).installed).toEqual([])
+  const course=await call(ctx,agent,'study_desktop',{action:'course',input:JSON.stringify({code:'ENV',name:'复用环境'})})
+  expect(course.isError,JSON.stringify(course)).toBe(false)
 })
 it('denies Python execution when host policy requires unavailable approval',async()=>{
   const {ctx,agent,project}=await runtime()
