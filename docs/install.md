@@ -91,3 +91,5 @@ bash "$HOME/Downloads/diagnose-desktop.command"
 脚本用桌面应用自带的 Electron 和实际插件配置检查导入，不执行学习工具，不安装依赖，不修改配置。请复制终端中的完整输出。应用需要位于 `/Applications` 或个人 `Applications` 文件夹。
 
 Harness 禁止通过 `dsh --profile desktop --dump-config-schema` 检查保留的桌面配置，即使使用桌面自带的命令也一样；请使用上述脚本。
+
+如果脚本显示“插件模块导入成功”，但窗口仍提示加载失败，先完全退出 Harness 再重新打开：macOS 使用 **⌘Q**，只关闭窗口不算退出。Harness 替换已安装的插件时会要求重启；插件页显示新版并不代表运行中的宿主已经加载新版。重新打开后确认插件启用，再尝试绑定学习项目。
