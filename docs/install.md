@@ -82,10 +82,12 @@ Web 或自定义宿主没有内置 Python 时，插件会尝试使用已有的�
 
 反馈问题时，提供操作系统、Harness 版本和实际错误提示。
 
-如果桌面版只显示 `failed to import`，且已通过应用菜单的 **管理 dsh 命令…** 安装桌面自带命令，可以在终端运行：
+如果桌面版只显示 `failed to import`，请下载[桌面诊断脚本](https://github.com/zhc070307/study-harness-plugin/raw/refs/heads/main/scripts/diagnose-desktop.command)，保存到下载文件夹，然后在终端运行：
 
 ```sh
-dsh --profile desktop --dump-config-schema 1>/dev/null
+bash "$HOME/Downloads/diagnose-desktop.command"
 ```
 
-这个命令检查插件导入，不执行学习工具。请复制终端中的具体错误，例如缺少哪个模块或导出；只凭窗口里的汇总提示无法确定原因。如果提示找不到 `dsh`，先通过上述应用菜单安装命令。
+脚本用桌面应用自带的 Electron 和实际插件配置检查导入，不执行学习工具，不安装依赖，不修改配置。请复制终端中的完整输出。应用需要位于 `/Applications` 或个人 `Applications` 文件夹。
+
+Harness 禁止通过 `dsh --profile desktop --dump-config-schema` 检查保留的桌面配置，即使使用桌面自带的命令也一样；请使用上述脚本。
