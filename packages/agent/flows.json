@@ -1,0 +1,113 @@
+{
+  "feedback": {
+    "title": "根据作答安排下一次练习",
+    "steps": [
+      {
+        "id": "feedback",
+        "kind": "feedback",
+        "instructions": "读取学生的原始作答，再批改并登记具体错误或不确定处。解释或发卷不代表掌握。"
+      },
+      {
+        "id": "plan",
+        "kind": "plan",
+        "instructions": "读取课程方法、实际授课范围和错点证据，写选题草案。核对来源、去重和整卷负担。",
+        "after": [
+          "feedback"
+        ]
+      },
+      {
+        "id": "review",
+        "kind": "review",
+        "instructions": "根据已保存草案制作练习，逐题核对原题并逐页检查成品，保存真实核验结果后交付。",
+        "after": [
+          "plan"
+        ]
+      }
+    ]
+  },
+  "material": {
+    "title": "处理新材料",
+    "steps": [
+      {
+        "id": "inspect",
+        "kind": "inspect",
+        "instructions": "读取材料内容，明确登记类型和所属课次，核对实际范围与正式要求，不根据文件名猜测。"
+      },
+      {
+        "id": "handoff",
+        "kind": "tasks",
+        "after": [
+          "inspect"
+        ],
+        "instructions": "依据课程约定、材料和用户要求安排实际需要的任务，已有任务能接续时复用。可以只读笔记、直接练习、交替进行或不新增任务，不默认两者有先后，不自动创建用户任务依赖；记录安排依据。"
+      },
+      {
+        "id": "receipt",
+        "kind": "receipt",
+        "instructions": "实际更新材料地图、复核课程状态和正式要求后保存处理回执。转写材料需要已完成的笔记，或明确记录无需新笔记的理由；待做任务仍保持未完成。",
+        "after": [
+          "inspect",
+          "handoff"
+        ]
+      }
+    ]
+  },
+  "daily": {
+    "title": "按需求安排学习计划",
+    "scope": "workspace",
+    "steps": [
+      {
+        "id": "context",
+        "kind": "context",
+        "instructions": "同步已有勾选、读取任务全量、课程状态、材料和用户约定；不把日历时间当作出勤或掌握。"
+      },
+      {
+        "id": "reconcile",
+        "kind": "course_state",
+        "after": [
+          "context"
+        ],
+        "instructions": "实际核对需要更新的课程事实与文档，明确不确定处。依据读取的哈希登记核对，必要时修改文档并保留旧版；已经一致的课程无需重复修改。"
+      },
+      {
+        "id": "selection",
+        "kind": "daily",
+        "after": [
+          "reconcile"
+        ],
+        "instructions": "依据用户需求、正式义务与实际学习价值选择周池和今日任务，记录优先级与跨课程选择理由。不规定阅读和练习顺序，不凭空设置任务依赖。只需要周计划时不必选择今日任务。"
+      }
+    ]
+  },
+  "retest": {
+    "title": "根据真实作答复测错点",
+    "steps": [
+      {
+        "id": "result",
+        "kind": "retest",
+        "instructions": "读取原错点和初次作答，取得真实复测作答后逐项批改，保存作答与新结果。未作答时等待，不用讲解或发题代替结果；不预设复测间隔，也不自动完成学习任务。"
+      }
+    ]
+  },
+  "course": {
+    "title": "核对课程事实与学习约定",
+    "steps": [
+      {
+        "id": "review",
+        "kind": "course_state",
+        "instructions": "读取课程事实、材料内容、文档及其哈希，记录实际核对结果。需要修改文档时带原版本哈希并保留旧版；未知保持未知。只保存模型核对，不声称学生已学习。"
+      }
+    ]
+  },
+  "memory": {
+    "title": "保存与整理长期约定",
+    "scope": "workspace",
+    "steps": [
+      {
+        "id": "memory",
+        "kind": "memory",
+        "instructions": "读取现有行动记忆及版本，保留用户长期约定和未完成事项，去掉重复或过时内容；课程知识和临时事实留在课程文档。依据用户要求保存整理说明，保留旧版以便恢复。"
+      }
+    ]
+  }
+}

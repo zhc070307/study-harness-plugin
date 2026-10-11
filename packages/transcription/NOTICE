@@ -1,0 +1,4 @@
+LocalTranscribe — Copyright LocalTranscribe contributors.
+Selected source from commit 42773e1a01f8029ae2f54ae7c924cbc0451d53f3, under Apache-2.0.
+Study Agent modifies the selected pipeline to produce raw transcripts only; GUI and API refinement are omitted.
+Study Agent adds an authenticated headless host service and resource checks; default GPU use, explicit CPU selection, no automatic CPU fallback.

@@ -1,0 +1,26 @@
+#!/usr/bin/env python3
+"""Run the program against the configured or explicitly selected semester."""
+import os
+import sys
+from pathlib import Path
+program = Path(__file__).resolve().parent
+sys.path.insert(0, str(program / 'src'))
+from study_agent.workspace import workspace_root
+try:
+    if '--workspace' in sys.argv:
+        position = sys.argv.index('--workspace')
+        root = Path(sys.argv[position + 1]).resolve()
+        del sys.argv[position:position + 2]
+    else:
+        root = workspace_root(Path.cwd())
+    if not root.is_dir():
+        raise ValueError('Selected semester directory is missing: ' + str(root))
+    os.chdir(root)
+    database = root / '.study-system/data/task_memory.sqlite3'
+    if 'init' not in sys.argv[1:] and '--db' not in sys.argv and not database.is_file():
+        raise ValueError('Semester database is missing; initialize a new semester explicitly')
+    os.environ['STUDY_AGENT_DB'] = str(database)
+    from study_agent.cli import main
+    raise SystemExit(main())
+except (ValueError, IndexError) as exc:
+    raise SystemExit(str(exc))

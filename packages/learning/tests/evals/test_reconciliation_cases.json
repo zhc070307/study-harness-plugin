@@ -1,0 +1,275 @@
+[
+  {
+    "id": "test-session-ends-notes-in-non-date-folder",
+    "course": "TEST101",
+    "why": "一节已结束课程 + 非日期目录里的新材料，必须形成学生阅读任务。",
+    "context_facts": {
+      "calendar": [
+        {
+          "title": "TEST 101 L5 Lecture",
+          "start": "2040-09-09T12:00:00+08:00",
+          "end": "2040-09-09T13:20:00+08:00",
+          "matched_course": "TEST101"
+        }
+      ],
+      "observations": [
+        {
+          "source_key": "Topic Example/TEST101_Session03_课堂笔记.pdf",
+          "artifact_kind": "note"
+        }
+      ]
+    },
+    "must": [
+      "为 TEST101 建立 post_class workflow instance，occurrence_key 使用课程、事件开始时间与规范化标题",
+      "把新笔记 observation 绑定到 TEST101 并关联该 instance",
+      "创建 actor=student 的阅读任务，authorization_source 指向已授权 step",
+      "给该任务一个 scheduled placement（含 priority 与 week_start）"
+    ],
+    "must_not": [
+      "从目录名推断课次或日期",
+      "把 Codex 生成笔记的工作写进学生阅读任务",
+      "创建第二个 instance 或重复任务"
+    ]
+  },
+  {
+    "id": "two-classes-same-title-same-day-different-sections",
+    "course": "TEST101",
+    "why": "同一门课同一天有两个 section 时，不能只靠标题合并成一次课。",
+    "context_facts": {
+      "calendar": [
+        {
+          "title": "TEST 101 L4 Lecture",
+          "start": "2040-09-09T09:00:00+08:00",
+          "end": "2040-09-09T10:20:00+08:00",
+          "matched_course": "TEST101"
+        },
+        {
+          "title": "TEST 101 L5 Lecture",
+          "start": "2040-09-09T12:00:00+08:00",
+          "end": "2040-09-09T13:20:00+08:00",
+          "matched_course": "TEST101"
+        }
+      ],
+      "observations": []
+    },
+    "must": [
+      "两个事件产生两个不同的 occurrence_key",
+      "只为学生实际注册的 section 建立课后任务",
+      "无法确定 section 时写入 ambiguities 而不是猜一个"
+    ],
+    "must_not": [
+      "把两个 section 合并成一个 instance",
+      "凭 L4/L5 编号猜测学生的 section"
+    ]
+  },
+  {
+    "id": "low-confidence-material",
+    "course": "TEST102",
+    "why": "无法可靠归属的文件必须进入待确认，而不能触发正式学习任务。",
+    "context_facts": {
+      "calendar": [],
+      "observations": [
+        {
+          "source_key": "mystery/unknown-file.bin",
+          "artifact_kind": "other"
+        }
+      ]
+    },
+    "must": [
+      "把该 observation 标为 needs_review",
+      "在 ambiguities 里只问最小问题"
+    ],
+    "must_not": [
+      "创建阅读或练习任务",
+      "猜测它属于哪节课"
+    ]
+  },
+  {
+    "id": "mixed-actor-work-is-split",
+    "course": "TEST103",
+    "why": "一份材料同时需要 Codex 处理和学生阅读时，必须拆成两个有依赖的任务。",
+    "context_facts": {
+      "calendar": [
+        {
+          "title": "TEST 103 L3 Lecture",
+          "start": "2040-09-10T12:00:00+08:00",
+          "end": "2040-09-10T13:20:00+08:00",
+          "matched_course": "TEST103"
+        }
+      ],
+      "observations": [
+        {
+          "source_key": "2040-09-10/slides-original.ppt",
+          "artifact_kind": "slides"
+        }
+      ]
+    },
+    "must": [
+      "agent 任务负责转写、范围核对与主笔记更新",
+      "student 任务负责阅读新增部分，并以该 agent 任务为 depends_on",
+      "两个任务各有自己的完成条件"
+    ],
+    "must_not": [
+      "把转写与阅读写成一个任务",
+      "让 agent 任务依赖 student 任务"
+    ]
+  },
+  {
+    "id": "unauthorized-new-obligation",
+    "course": "TEST104",
+    "why": "推不出来的额外练习只能先提出，不能直接成为开放任务。",
+    "context_facts": {
+      "calendar": [],
+      "observations": []
+    },
+    "must": [
+      "只能创建 status=proposed 的任务",
+      "在 ambiguities 中说明该建议的来源与理由"
+    ],
+    "must_not": [
+      "创建 status=open 的额外练习",
+      "给出 authorization_source"
+    ]
+  },
+  {
+    "id": "overdue-task-is-not-resent",
+    "course": "TEST105",
+    "why": "过期任务必须改写成仍然真实可执行的动作，不能照原样塞进今天。",
+    "context_facts": {
+      "open_tasks": [
+        {
+          "task_key": "T-900001",
+          "title": "补齐示例主题进度",
+          "placement": {
+            "kind": "scheduled",
+            "scheduled_date": "2040-09-08",
+            "priority": "should"
+          }
+        }
+      ],
+      "query_date": "2040-09-10"
+    },
+    "must": [
+      "把该任务改成今天或之后仍可执行的动作，或改为 waiting 并给出 next_check_at"
+    ],
+    "must_not": [
+      "保留 2040-09-08 作为安排日期",
+      "不给改变的理由"
+    ]
+  },
+  {
+    "id": "second-confirmed-miss",
+    "course": "TEST104",
+    "why": "第二次明确未完成时，只把日期后移不是真实变化。",
+    "context_facts": {
+      "open_tasks": [
+        {
+          "task_key": "T-900002",
+          "title": "完成 Stewart 首轮覆盖练习其余批次",
+          "placement": {
+            "kind": "scheduled",
+            "scheduled_date": "2040-09-10",
+            "priority": "if_time",
+            "deferral_count": 2
+          }
+        }
+      ],
+      "query_date": "2040-09-10"
+    },
+    "must": [
+      "拆小任务、改变方法或材料、降低范围、安排受保护位置、或经确认移出本周",
+      "在 change_reason 里说明这次与上次有什么不同"
+    ],
+    "must_not": [
+      "只把 scheduled_date 向后移"
+    ]
+  },
+  {
+    "id": "student-offline-provisional-week",
+    "course": "ECON2123",
+    "why": "学生不在线时只能发布最小临时计划。",
+    "context_facts": {
+      "calendar": [
+        {
+          "title": "ECON 2123 Midterm",
+          "start": "2040-10-15T19:00:00+08:00",
+          "end": "2040-10-15T20:00:00+08:00",
+          "matched_course": "ECON2123"
+        }
+      ],
+      "student_online": false
+    },
+    "must": [
+      "confirmation 写 provisional",
+      "只覆盖硬截止、必须出席与立即阻塞后续工作的事项"
+    ],
+    "must_not": [
+      "confirmation 写 confirmed",
+      "把长期练习放进本周承诺"
+    ]
+  },
+  {
+    "id": "file-existence-is-not-mastery",
+    "course": "TEST103",
+    "why": "文件存在不能变成学生已阅读或已掌握的证据。",
+    "context_facts": {
+      "open_tasks": [
+        {
+          "task_key": "T-900003",
+          "title": "阅读课程主笔记的 Class 02 部分",
+          "actor": "student",
+          "placement": {
+            "kind": "scheduled",
+            "scheduled_date": "2040-09-10",
+            "priority": "if_time"
+          }
+        }
+      ],
+      "observations": [
+        {
+          "source_key": "notes/lecture/TEST103_课堂笔记.pdf",
+          "artifact_kind": "note"
+        }
+      ]
+    },
+    "must": [
+      "保持该任务 open",
+      "不新增完成证据"
+    ],
+    "must_not": [
+      "把任务标为完成",
+      "用 artifact 作为完成证据"
+    ]
+  },
+  {
+    "id": "mechanical-rescan-of-one-class",
+    "course": "TEST102",
+    "why": "同一节课重复扫描不得重复建任务。",
+    "context_facts": {
+      "open_workflow_instances": [
+        {
+          "course": "TEST102",
+          "workflow_id": "post_class",
+          "occurrence_key": "TEST102|2040-09-09T15:00:00+08:00|test102l2lecture"
+        }
+      ],
+      "calendar": [
+        {
+          "title": "TEST 102 L2 Lecture",
+          "start": "2040-09-09T15:00:00+08:00",
+          "end": "2040-09-09T16:20:00+08:00",
+          "matched_course": "TEST102"
+        }
+      ],
+      "observations": []
+    },
+    "must": [
+      "复用已有 instance 与已创建的任务",
+      "允许 operations 为空"
+    ],
+    "must_not": [
+      "重复创建课后链",
+      "重复创建同一 step 的任务"
+    ]
+  }
+]

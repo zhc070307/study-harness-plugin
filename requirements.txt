@@ -1,0 +1,4 @@
+pypdfium2==4.30.0
+pillow==11.3.0
+icalendar==6.3.2
+tzdata==2025.2

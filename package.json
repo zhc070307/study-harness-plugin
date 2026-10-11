@@ -1,0 +1,78 @@
+{
+  "name": "@study-agent/harness-plugin",
+  "version": "0.1.0",
+  "description": "Project-bound learning tools, shared study context, transcription and calendars for DeepSeek Harness",
+  "type": "module",
+  "license": "MIT",
+  "main": "./lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json",
+    "./cordis.patch.yml": "./cordis.patch.yml"
+  },
+  "bin": {
+    "study-plugin": "./lib/cli.js"
+  },
+  "files": [
+    "lib",
+    "packages/agent/*.py",
+    "packages/agent/*.json",
+    "packages/agent/*.md",
+    "packages/learning/src/**/*.py",
+    "packages/learning/src/**/*.sql",
+    "packages/learning/src/**/*.json",
+    "packages/learning/skills",
+    "packages/learning/tools/calendar-events/*.swift",
+    "packages/learning/tools/calendar-events/*.sh",
+    "packages/learning/tools/calendar-events/*.plist",
+    "packages/transcription/**/*.py",
+    "packages/transcription/*.txt",
+    "packages/transcription/SOURCE.json",
+    "packages/transcription/LICENSE",
+    "packages/transcription/NOTICE",
+    "cordis.patch.yml",
+    "requirements.txt",
+    "README.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "SOURCE.json"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "4.0.5-alpha.1",
+    "@deepseek-ai/dsh-agent": "0.2.1-alpha.2",
+    "@deepseek-ai/dsh-attachment": "0.2.1-alpha.2",
+    "@deepseek-ai/dsh-llm": "0.2.1-alpha.2",
+    "@deepseek-ai/dsh-sandbox": "0.2.1-alpha.2",
+    "@deepseek-ai/dsh-sandbox-policy": "0.2.1-alpha.2",
+    "@deepseek-ai/dsh-scope": "0.2.1-alpha.2",
+    "@deepseek-ai/dsh-system-prompt": "0.2.1-alpha.2",
+    "@deepseek-ai/dsh-tools": "0.2.1-alpha.2",
+    "@deepseek-ai/schemastery": "3.18.5-alpha.1"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "vitest run && python3 -m unittest discover -s tests -v",
+    "test:learning": "PYTHONPATH=packages/learning/src python3 -m unittest discover -s packages/learning/tests -t packages/learning -q",
+    "test:install": "node scripts/smoke-install.mjs",
+    "prepack": "npm run build",
+    "check": "npm run build && tsc --noEmit && npm test && npm run test:learning"
+  },
+  "devDependencies": {
+    "@deepseek-ai/dsh": "0.2.1-alpha.2",
+    "@deepseek-ai/dsh-agent-loop-testkit": "0.2.1-alpha.2",
+    "@deepseek-ai/dsh-attachment-local": "0.2.1-alpha.2",
+    "@deepseek-ai/dsh-session-persistence-jsonl": "0.2.1-alpha.2",
+    "esbuild": "0.28.1",
+    "tsx": "4.22.4",
+    "typescript": "6.0.3",
+    "vitest": "4.1.8"
+  }
+}

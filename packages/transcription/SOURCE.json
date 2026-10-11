@@ -1,0 +1,13 @@
+{
+  "repository": "https://github.com/zhc070307/LocalTranscribe_on_going",
+  "commit": "42773e1a01f8029ae2f54ae7c924cbc0451d53f3",
+  "license": "Apache-2.0",
+  "components": [
+    "audio",
+    "models",
+    "paths",
+    "task_store",
+    "pipeline"
+  ],
+  "changes": "Selected headless audio pipeline only; remote refinement removed. No GUI, desktop launcher, updater, or Qt dependency. Accelerator-first host integration; explicit CPU selection only; automatic CPU fallback removed."
+}

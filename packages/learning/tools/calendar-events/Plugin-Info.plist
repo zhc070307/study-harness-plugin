@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleExecutable</key>
+    <string>study-calendar</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.study-agent.harness-calendar</string>
+    <key>CFBundleName</key>
+    <string>study-calendar</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>14.0</string>
+    <key>NSCalendarsFullAccessUsageDescription</key>
+    <string>按你的要求查询、创建、修改或删除学习日历事件。</string>
+</dict>
+</plist>

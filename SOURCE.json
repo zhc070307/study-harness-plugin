@@ -1,0 +1,7 @@
+{
+  "repository": "https://github.com/zhc070307/study-agent",
+  "commit": "14e4dbba1ad1c9c31a17d412e09ea3d1faaad1ff",
+  "components": ["packages/agent (learning tools and Python bridges)", "packages/learning", "packages/transcription"],
+  "harnessReference": {"repository": "https://github.com/deepseek-ai/deepseek-harness", "commit": "d743267388641bc76f17c45ce8b4c231aed1d32c"},
+  "note": "Independent plugin repository; no Harness runtime or standalone desktop UI is bundled. Component licenses are retained."
+}
