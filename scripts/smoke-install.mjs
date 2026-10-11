@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process'
 import { mkdtempSync, rmSync, mkdirSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import assert from 'node:assert/strict'
 
 // Use an isolated official profile: no existing Harness settings or study data.
@@ -17,6 +18,9 @@ function run(args, cwd = process.cwd()) {
     encoding: 'utf8', timeout: 120000, maxBuffer: 4 * 1024 * 1024,
   })
   if (result.error || result.status !== 0) throw new Error(result.error?.message ?? result.stderr + result.stdout)
+  if (/did not activate|failed to import/.test(result.stderr + result.stdout)) {
+    throw new Error(result.stderr + result.stdout)
+  }
   return result.stdout
 }
 try {
@@ -25,6 +29,12 @@ try {
   run(['--profile', profile, '--from-default-profile', 'sdk-minimal', '--dump-config'])
   run(['plugin', '--profile', profile, 'add', archive])
   assert.match(run(['--profile', profile, '--dump-config']), /study-projects/)
+  const verification = spawnSync(process.execPath, [fileURLToPath(new URL('./verify-activation.mjs', import.meta.url)), home, profile], {
+    cwd: process.cwd(), env: { ...process.env, DSH_HOME: home },
+    encoding: 'utf8', timeout: 120000, maxBuffer: 4 * 1024 * 1024,
+  })
+  if (verification.error || verification.status !== 0) throw new Error(verification.error?.message ?? verification.stderr + verification.stdout)
+  assert.match(verification.stdout, /study_project 工具已注册/)
   run(['--profile', profile], project)
   console.log('官方 Harness：安装包、profile 配置和实际启动通过。')
 } finally {
